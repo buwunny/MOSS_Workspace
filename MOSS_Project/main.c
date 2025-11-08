@@ -27,11 +27,18 @@
 #include <ti/devices/msp/msp.h>
 #include "clock.h"
 #include "LaunchPad.h"
-
+#include "uart.h"
+#include "lcd1602.h"
+#include "adc.h"
+#include "spi.h"
+#include "kernel.h"
+#include "shell.h"
 
 //------------------------------------------------------------------------------
 // Define function prototypes used by the program
 //------------------------------------------------------------------------------
+void system_init(void);
+void SysTick_Handler(void);
 
 
 //------------------------------------------------------------------------------
@@ -47,14 +54,51 @@
 
 int main(void)
 {
-  // Configure the LaunchPad board
-  clock_init_40mhz();
-  launchpad_gpio_init();
- 
-  // enter your code here
-
- 
+  system_init();
+  
   // Endless loop to prevent program from ending
   while (1);
 
 } /* main */
+
+
+void system_init(void)
+{
+  I2C_init();
+  lcd1602_init();
+
+  kernel_init();
+  shell_init();
+  shell_loop();
+} /* system_init */
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function represents the ISR (Interrupt Service Routine) for the SysTick
+//  timer. It is called at regular intervals based on the configured SysTick
+//  period.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
+void SysTick_Handler(void)
+{
+  static bool on = false;
+  
+  if (!on)
+  {
+    lp_leds_on(LP_RED_LED1_IDX);
+  } /* if */
+  else
+  {
+    lp_leds_off(LP_RED_LED1_IDX);
+  } /* else */
+
+  on = !on;
+} /* SysTick_Handler */
