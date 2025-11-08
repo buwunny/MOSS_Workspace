@@ -1,4 +1,14 @@
 {
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": "MOSS_Project",
+            "type": "ccs-debug",
+            "request": "launch",
+            "projectInfo": {
+                "name": "MOSS_Project",
+                "resourceId": "/MOSS_Project"
+            }
+        }
+    ]
 }
