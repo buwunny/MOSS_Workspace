@@ -55,8 +55,8 @@
 
 void kernel_init(void)
 {
-  
-  clock_init_40mhz();
+  clock_init_80mhz();
+  // clock_init_40mhz();
   launchpad_gpio_init();
   lp_leds_init();
   

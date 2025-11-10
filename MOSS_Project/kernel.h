@@ -44,7 +44,7 @@
 // Define symbolic constants used by the program
 //-----------------------------------------------------------------------------
 #define MSPM0_CLOCK_FREQUENCY                                             (40E6)
-#define SYST_TICK_PERIOD                                                     (1)
+#define SYST_TICK_PERIOD                                                   (1E3)
 #define SYST_TICK_PERIOD_COUNT        (SYST_TICK_PERIOD * MSPM0_CLOCK_FREQUENCY)
 
 

@@ -54,12 +54,19 @@
 //-----------------------------------------------------------------------------
 // Define symbolic constants used by the program
 //-----------------------------------------------------------------------------
-
-
+#define SYSCTL_FLASH_WAIT_STATE_2                       ((uint32_t) 0x00000200U)
+/*! PLL feedback loop input clock frequency [16MHz, 32MHz) */
+#define SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ               ((uint32_t) 0x41C4002C)
+#define Q_DIV                                                                (9)
+#define DIV_CLK_2X                                                           (3)
+#define DIV_CLK_1                                                            (1)
+#define DIV_CLK_0                                                            (0)
+  
+  
 // ----------------------------------------------------------------------------
 // Prototype for support functions
 // ----------------------------------------------------------------------------
-void clock_init_80mhz(int enablePA14);
+void clock_init_80mhz(void);
 void clock_init_40mhz(void);
 void clock_init(uint32_t freq);
 

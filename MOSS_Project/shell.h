@@ -47,6 +47,9 @@
 #define CARRIAGE_RETURN_CHAR                                              ('\r')
 #define NULL_CHAR                                                         ('\0')
 #define BACKSPACE_CHAR                                                    ('\b')
+#define DEGREE_SYMBOL                                               (0b11011111)
+#define TEMP_SENSOR_CHANNEL                                                  (5)
+#define CONVERT_TO_FAHRENHEIT(x)                              ((x) * 9 / 5 + 32)
 
 
 // ----------------------------------------------------------------------------
@@ -55,9 +58,12 @@
 void shell_init(void);
 void shell_loop(void);
 void shell_handle_input(char* input);
-void uart_interrupt_enable(void);
+void UART_interrupt_enable(void);
+void UART_write_string(char* string);
 void lcd_write_time(uint8_t hour, uint8_t min, uint8_t sec);
+void show_temp(void);
 void UART0_IRQHandler(void);
 void RTC_IRQHandler(void);
+uint32_t measure_clock(void);
 
 #endif /* __SHELL_H__ */

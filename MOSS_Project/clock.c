@@ -1,9 +1,9 @@
 // *****************************************************************************
 // ***************************    C Source Code     ****************************
 // *****************************************************************************
-//   DESIGNER NAME:  Bruce Link
+//   DESIGNER NAME:  Bruce Link, Rafael Ortiz
 //
-//         VERSION:  1.0
+//         VERSION:  1.1
 //
 //       FILE NAME:  clock.c
 //
@@ -217,6 +217,129 @@ void clock_init_40mhz(void)
 
 } /* clock_init_40mhz */
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//    This function initializes the system clock on for the LP-MSPM03507 
+//    LaunchPad to achieve a target frequency of 80 MHz by configuring 
+//    various clock sources, dividers, PLL, and control registers. 
+//
+//
+//    NOTE: The function uses busy-wait loops to check the status of various
+//          clock sources and configurations. These loops may cause the 
+//          program to be stuck in an infinite loop if the hardware status 
+//          flags are not set as expected.
+//
+// INPUT PARAMETERS:
+//   none
+//
+// OUTPUT PARAMETERS:
+//   none
+//
+// RETURN:
+//   none
+// -----------------------------------------------------------------------------
+void clock_init_80mhz(void)
+{
+  //Low Power Mode is configured to be SLEEP0
+  SYSCTL->SOCLOCK.BORTHRESHOLD = SYSCTL_BORTHRESHOLD_LEVEL_BORMIN;
+  SYSCTL->SOCLOCK.MCLKCFG |= SYSCTL_FLASH_WAIT_STATE_2;
+  
+  SYSCTL->SOCLOCK.SYSOSCCFG |= SYSCTL_SYSOSCCFG_FREQ_SYSOSCBASE;
+	/* Set default configuration */
+  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_HFXTEN_MASK;
+  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_SYSPLLEN_MASK;
+
+  // CONFIG SYSPLL
+
+  /* PLL configurations are retained in lower reset levels. Set default
+   * behavior of disabling the PLL to keep a consistent behavior regardless
+   * of reset level. */
+  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_SYSPLLEN_MASK;
+
+  // Check that SYSPLL is disabled before configuration
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLOFF_TRUE) != 
+          SYSCTL_CLKSTATUS_SYSPLLOFF_TRUE);
+
+  // set SYSPLL reference clock
+  SYSCTL->SOCLOCK.SYSPLLCFG0 |= SYSCTL_HSCLKEN_SYSPLLEN_ENABLE;
+  
+  // set predivider PDIV (divides reference clock)
+  SYSCTL->SOCLOCK.SYSPLLCFG1 |= SYSCTL_SYSPLLCFG1_PDIV_REFDIV2;
+
+  // save CPUSS CTL state and disable the cache
+  uint32_t ctlTemp = CPUSS->CTL & (CPUSS_CTL_ICACHE_MASK | 
+                     CPUSS_CTL_PREFETCH_MASK | CPUSS_CTL_LITEN_MASK);
+  CPUSS->CTL = (CPUSS_CTL_PREFETCH_ENABLE | CPUSS_CTL_ICACHE_DISABLE |
+                CPUSS_CTL_LITEN_ENABLE);
+  
+  // populate SYSPLLPARAM0/1 tuning registers from flash, based on input freq
+  SYSCTL->SOCLOCK.SYSPLLPARAM0 = SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ;
+  SYSCTL->SOCLOCK.SYSPLLPARAM1 = SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ + 0x4;
+
+  // restore CPUSS CTL state
+  CPUSS->CTL = ctlTemp;
+
+  // set feedback divider QDIV (multiplies to give output frequency)
+  SYSCTL->SOCLOCK.SYSPLLCFG1 |= Q_DIV << SYSCTL_SYSPLLCFG1_QDIV_OFS & 
+                                SYSCTL_SYSPLLCFG1_QDIV_MASK;
+
+  // write clock output dividers, enable outputs, and MCLK source to SYSPLLCFG0
+  SYSCTL->SOCLOCK.SYSPLLCFG0 |= (
+    ((DIV_CLK_2X << SYSCTL_SYSPLLCFG0_RDIVCLK2X_OFS) &
+      SYSCTL_SYSPLLCFG0_RDIVCLK2X_MASK) |
+    ((DIV_CLK_1 << SYSCTL_SYSPLLCFG0_RDIVCLK1_OFS) &
+      SYSCTL_SYSPLLCFG0_RDIVCLK1_MASK) |
+    ((DIV_CLK_0 << SYSCTL_SYSPLLCFG0_RDIVCLK0_OFS) &
+      SYSCTL_SYSPLLCFG0_RDIVCLK0_MASK) |
+    SYSCTL_SYSPLLCFG0_ENABLECLK2X_ENABLE |
+    SYSCTL_SYSPLLCFG0_ENABLECLK1_ENABLE |
+    SYSCTL_SYSPLLCFG0_ENABLECLK0_ENABLE |
+    SYSCTL_SYSPLLCFG0_MCLK2XVCO_ENABLE
+  );
+
+  // enable SYSPLL
+  SYSCTL->SOCLOCK.HSCLKEN |= SYSCTL_HSCLKEN_SYSPLLEN_ENABLE;
+
+  // wait until SYSPLL startup is stabilized
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLGOOD_MASK) !=
+          SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE);
+  
+  // END CONFIG SYSPLL
+
+  // set ULPCLK Divider
+  SYSCTL->SOCLOCK.MCLKCFG |= SYSCTL_MCLKCFG_UDIV_DIVIDE2;
+
+  // Switch MCLK to SYSOSC
+  SYSCTL->SOCLOCK.MCLKCFG &= ~SYSCTL_MCLKCFG_USEHSCLK_ENABLE;
+
+  // Verify SYSOSC -> MCLK
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_HSCLKMUX_MASK) ==
+          SYSCTL_CLKSTATUS_HSCLKMUX_HSCLK);
+
+  // enable external clock
+  SYSCTL->SOCLOCK.GENCLKCFG |= SYSCTL_GENCLKCFG_EXCLKSRC_SYSPLLOUT1 | 
+                               SYSCTL_GENCLKCFG_EXCLKDIVEN_PASSTHRU;
+
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & (SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE
+          | SYSCTL_CLKSTATUS_HSCLKGOOD_TRUE
+          | SYSCTL_CLKSTATUS_LFOSCGOOD_TRUE))
+          != (SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE
+          | SYSCTL_CLKSTATUS_HSCLKGOOD_TRUE
+          | SYSCTL_CLKSTATUS_LFOSCGOOD_TRUE))
+	{
+		/* Ensure that clocks are in default POR configuration before initialization.
+		* Additionally once LFXT is enabled, the internal LFOSC is disabled, and cannot
+		* be re-enabled other than by executing a BOOTRST. */
+		;
+	}
+
+  // update the bus clock frequency
+  g_bus_clock_freq = 80000000;
+
+  msec_delay(500);
+
+} /* clock_init_80mhz */
 
 
 //-----------------------------------------------------------------------------

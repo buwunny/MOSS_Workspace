@@ -66,6 +66,7 @@ void system_init(void)
 {
   I2C_init();
   lcd1602_init();
+  ADC0_init(ADC12_MEMCTL_VRSEL_VDDA_VSSA);
 
   kernel_init();
   shell_init();
