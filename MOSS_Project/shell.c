@@ -54,6 +54,7 @@ void shell_loop(void)
     // uint32_t result = measure_clock();
     // lcd_set_ddram_addr(LCD_LINE2_ADDR);
     // lcd_write_quadbyte(result);
+    UART_out_char('A');
     msec_delay(1000);
   } /* while */
   // while (1)

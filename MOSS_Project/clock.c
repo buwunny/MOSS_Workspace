@@ -241,99 +241,71 @@ void clock_init_40mhz(void)
 // -----------------------------------------------------------------------------
 void clock_init_80mhz(void)
 {
-  //Low Power Mode is configured to be SLEEP0
-  SYSCTL->SOCLOCK.BORTHRESHOLD = SYSCTL_BORTHRESHOLD_LEVEL_BORMIN;
-  SYSCTL->SOCLOCK.MCLKCFG |= SYSCTL_FLASH_WAIT_STATE_2;
+  // Followed SYSPLL Usage Example from page 196 of the "MSPM0 G-Series 80MHz
+  // Microcontrollers" Technical Reference Manual
   
-  SYSCTL->SOCLOCK.SYSOSCCFG |= SYSCTL_SYSOSCCFG_FREQ_SYSOSCBASE;
-	/* Set default configuration */
-  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_HFXTEN_MASK;
-  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_SYSPLLEN_MASK;
-
-  // CONFIG SYSPLL
-
-  /* PLL configurations are retained in lower reset levels. Set default
-   * behavior of disabling the PLL to keep a consistent behavior regardless
-   * of reset level. */
-  SYSCTL->SOCLOCK.HSCLKEN &= ~SYSCTL_HSCLKEN_SYSPLLEN_MASK;
-
-  // Check that SYSPLL is disabled before configuration
-  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLOFF_TRUE) != 
+  // 1. Verify that the SYSPLL is disabled (SYSPLLOFF is set in CLKSTATUS)
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLOFF_MASK) != 
           SYSCTL_CLKSTATUS_SYSPLLOFF_TRUE);
-
-  // set SYSPLL reference clock
-  SYSCTL->SOCLOCK.SYSPLLCFG0 |= SYSCTL_HSCLKEN_SYSPLLEN_ENABLE;
   
-  // set predivider PDIV (divides reference clock)
+  // 2. Make sure that SYSOSC is running at base frequency (32MHz); this is a
+  // requirement for SYSPLL operation even if HFCLK is used as the SYSPLL
+  // reference clock instead of SYSOSC
+  SYSCTL->SOCLOCK.SYSOSCCFG &= ~SYSCTL_SYSOSCCFG_FREQ_MASK;
+  SYSCTL->SOCLOCK.SYSOSCCFG |=  SYSCTL_SYSOSCCFG_FREQ_SYSOSCBASE;
+
+  // 3. Set SYSOSC as the SYSPLL reference (make sure that the SYSPLLREF bit in
+  // the SYSPLLCFG0 register is cleared; this is the default state after reset)
+  SYSCTL->SOCLOCK.SYSPLLCFG0 &= ~SYSCTL_SYSPLLCFG0_SYSPLLREF_MASK;
+
+  // 4. Select a predivider PDIV to /2 (set SYSPLLCFG1.PDIV to 0x01), setting
+  // fLOOPIN to 16MHz (32 divided by 2)
+  SYSCTL->SOCLOCK.SYSPLLCFG1 &= ~SYSCTL_SYSPLLCFG1_PDIV_MASK;
   SYSCTL->SOCLOCK.SYSPLLCFG1 |= SYSCTL_SYSPLLCFG1_PDIV_REFDIV2;
-
-  // save CPUSS CTL state and disable the cache
-  uint32_t ctlTemp = CPUSS->CTL & (CPUSS_CTL_ICACHE_MASK | 
-                     CPUSS_CTL_PREFETCH_MASK | CPUSS_CTL_LITEN_MASK);
-  CPUSS->CTL = (CPUSS_CTL_PREFETCH_ENABLE | CPUSS_CTL_ICACHE_DISABLE |
-                CPUSS_CTL_LITEN_ENABLE);
   
-  // populate SYSPLLPARAM0/1 tuning registers from flash, based on input freq
+  // 5. Load the PLL parameters into SYSPLLPARAM0 and SYSPLLPARAM1 to support
+  // fLOOPIN of 16MHz
   SYSCTL->SOCLOCK.SYSPLLPARAM0 = SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ;
-  SYSCTL->SOCLOCK.SYSPLLPARAM1 = SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ + 0x4;
+  SYSCTL->SOCLOCK.SYSPLLPARAM1 = SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ + 0x04;
 
-  // restore CPUSS CTL state
-  CPUSS->CTL = ctlTemp;
-
-  // set feedback divider QDIV (multiplies to give output frequency)
-  SYSCTL->SOCLOCK.SYSPLLCFG1 |= Q_DIV << SYSCTL_SYSPLLCFG1_QDIV_OFS & 
-                                SYSCTL_SYSPLLCFG1_QDIV_MASK;
-
-  // write clock output dividers, enable outputs, and MCLK source to SYSPLLCFG0
-  SYSCTL->SOCLOCK.SYSPLLCFG0 |= (
-    ((DIV_CLK_2X << SYSCTL_SYSPLLCFG0_RDIVCLK2X_OFS) &
-      SYSCTL_SYSPLLCFG0_RDIVCLK2X_MASK) |
-    ((DIV_CLK_1 << SYSCTL_SYSPLLCFG0_RDIVCLK1_OFS) &
-      SYSCTL_SYSPLLCFG0_RDIVCLK1_MASK) |
-    ((DIV_CLK_0 << SYSCTL_SYSPLLCFG0_RDIVCLK0_OFS) &
-      SYSCTL_SYSPLLCFG0_RDIVCLK0_MASK) |
-    SYSCTL_SYSPLLCFG0_ENABLECLK2X_ENABLE |
-    SYSCTL_SYSPLLCFG0_ENABLECLK1_ENABLE |
-    SYSCTL_SYSPLLCFG0_ENABLECLK0_ENABLE |
-    SYSCTL_SYSPLLCFG0_MCLK2XVCO_ENABLE
-  );
-
-  // enable SYSPLL
-  SYSCTL->SOCLOCK.HSCLKEN |= SYSCTL_HSCLKEN_SYSPLLEN_ENABLE;
-
-  // wait until SYSPLL startup is stabilized
-  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLGOOD_MASK) !=
-          SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE);
+  // 6. Set the feedback divider QDIV to 5 (set SYSPLLCFG1.QDIV to 4), giving 
+  // fVCO =80MHz (16MHz multiplied by 5)
+  SYSCTL->SOCLOCK.SYSPLLCFG1 &= ~SYSCTL_SYSPLLCFG1_QDIV_MASK;
+  SYSCTL->SOCLOCK.SYSPLLCFG1 |= 4U << SYSCTL_SYSPLLCFG1_QDIV_OFS;
   
-  // END CONFIG SYSPLL
+  // 7. Set the SYSPLL output dividers for SYSPLLCLK1 and SYSPLLCLK2X to /2 (set
+  // SYSPLLCFG0.RDIVCLK1 to 0x0 and SYSPLLCFG0.RDIVCLK2X to 0x1) to get 40MHz 
+  // and 80MHz at SYSPLLCLK1 and SYSPLLCLK2X, respectively
+  SYSCTL->SOCLOCK.SYSPLLCFG0 &= ~SYSCTL_SYSPLLCFG0_RDIVCLK1_MASK;
+  SYSCTL->SOCLOCK.SYSPLLCFG0 |=  SYSCTL_SYSPLLCFG0_RDIVCLK2X_CLK2XDIV2;
+  
+  // 8. Enable SYSPLLCLK1 and SYSPLLCLK2X outputs by setting the ENABLECLK1 and
+  // ENABLECLK2X bits in the SYSPLLCFG0 register
+  SYSCTL->SOCLOCK.SYSPLLCFG0 |= (SYSCTL_SYSPLLCFG0_ENABLECLK1_MASK | SYSCTL_SYSPLLCFG0_ENABLECLK2X_MASK);
 
-  // set ULPCLK Divider
-  SYSCTL->SOCLOCK.MCLKCFG |= SYSCTL_MCLKCFG_UDIV_DIVIDE2;
+  // 9. Select SYSPLLCLK2X as the PLL output to the HSCLK mux by setting 
+  // MCLK2XVCO in the SYSPLLCFG0 register
+  SYSCTL->SOCLOCK.SYSPLLCFG0 |= SYSCTL_SYSPLLCFG0_MCLK2XVCO_MASK;
 
-  // Switch MCLK to SYSOSC
-  SYSCTL->SOCLOCK.MCLKCFG &= ~SYSCTL_MCLKCFG_USEHSCLK_ENABLE;
+  // 10. With SYSOSC enabled and running at base frequency (32MHz, this is the 
+  // default state out of reset), enable the SYSPLL by setting SYSPLLEN in the
+  // HSCLKEN register
+  SYSCTL->SOCLOCK.HSCLKEN |= SYSCTL_HSCLKEN_SYSPLLEN_MASK;
 
-  // Verify SYSOSC -> MCLK
-  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_HSCLKMUX_MASK) ==
-          SYSCTL_CLKSTATUS_HSCLKMUX_HSCLK);
+  // 11. Wait for the SYSPLLGOOD indication by testing SYSPLLGOOD in the 
+  // CLKSTATUS register
+  while ((SYSCTL->SOCLOCK.CLKSTATUS & SYSCTL_CLKSTATUS_SYSPLLGOOD_MASK) != 
+          SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE);
 
-  // enable external clock
-  SYSCTL->SOCLOCK.GENCLKCFG |= SYSCTL_GENCLKCFG_EXCLKSRC_SYSPLLOUT1 | 
-                               SYSCTL_GENCLKCFG_EXCLKDIVEN_PASSTHRU;
+  // 12. Select the SYSPLL as the HSCLK source by ensuring that the HSCLKSEL bit 
+  // is cleared in the HSCLKCFG register (this is the default state)
+  SYSCTL->SOCLOCK.HSCLKCFG &= ~SYSCTL_HSCLKCFG_HSCLKSEL_MASK;
 
-  while ((SYSCTL->SOCLOCK.CLKSTATUS & (SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE
-          | SYSCTL_CLKSTATUS_HSCLKGOOD_TRUE
-          | SYSCTL_CLKSTATUS_LFOSCGOOD_TRUE))
-          != (SYSCTL_CLKSTATUS_SYSPLLGOOD_TRUE
-          | SYSCTL_CLKSTATUS_HSCLKGOOD_TRUE
-          | SYSCTL_CLKSTATUS_LFOSCGOOD_TRUE))
-	{
-		/* Ensure that clocks are in default POR configuration before initialization.
-		* Additionally once LFXT is enabled, the internal LFOSC is disabled, and cannot
-		* be re-enabled other than by executing a BOOTRST. */
-		;
-	}
-
+  // 13. Select the high-speed clock (HSCLK) as the source for MCLK by setting 
+  // the USEHSCLK bit in the MCLKCFG register. This will switch MCLK from SYSOSC
+  // to HSCLK. MCLK is now running from SYSPLLCLK2X at 80MHz.
+  SYSCTL->SOCLOCK.MCLKCFG |= SYSCTL_MCLKCFG_USEHSCLK_MASK;
+  
   // update the bus clock frequency
   g_bus_clock_freq = 80000000;
 
