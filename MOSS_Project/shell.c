@@ -33,6 +33,7 @@
 
 #include <ti/devices/msp/msp.h>
 #include <ti/devices/msp/m0p/mspm0g350x.h>
+#include <string.h>
 #include "shell.h"
 #include "uart.h"
 #include "lcd1602.h"
@@ -44,6 +45,8 @@ void shell_init(void)
 {
   UART_init(115200);
   UART_interrupt_enable();
+
+  UART_write_string("\nWelcome back!\n");
   
 } /* shell_init */
 
@@ -51,51 +54,83 @@ void shell_loop(void)
 {
   while (1)
   {
-    // uint32_t result = measure_clock();
-    // lcd_set_ddram_addr(LCD_LINE2_ADDR);
-    // lcd_write_quadbyte(result);
-    UART_out_char('A');
-    msec_delay(1000);
-  } /* while */
-  // while (1)
-  // {
-  //   // UART_out_char();
-  //   char buffer[SHELL_MAX_INPUT_LENGTH];
-  //   uint8_t index = 0;
-  //   char input;
-  //   do
-  //   {      
-  //     input = UART_in_char();
-  //     if (input == CARRIAGE_RETURN_CHAR)
-  //     {
-  //       UART_out_char('\n');
-  //       buffer[index] = NULL_CHAR;
-  //     } /* if */
-  //     else if (input == BACKSPACE_CHAR) {
-  //       UART_out_char(input);
-  //       if (index > 0)
-  //       {
-  //         index--;
-  //         lcd_set_ddram_addr(LCD_LINE2_ADDR + index);
-  //         lcd_write_char(' ');
-  //         lcd_set_ddram_addr(LCD_LINE2_ADDR + index);
-  //       } /* if */
-  //     } /* else if */
-  //     else {
-  //       if (index < SHELL_MAX_INPUT_LENGTH)
-  //       {
-  //         UART_out_char(input);
-  //         buffer[index] = input;
-  //         index++;
-  //         lcd_set_ddram_addr(LCD_LINE2_ADDR + index - 1);
-  //         lcd_write_char(input);
-  //       }
-  //     } /* else */
-  //   } while (input != CARRIAGE_RETURN_CHAR);
-  //   lcd_set_ddram_addr(LCD_LINE2_ADDR);
-  //   lcd_write_string("                ");
-  // }
+    char buffer[SHELL_MAX_INPUT_LENGTH];
+    uint8_t index = 0;
+    char input;
+    do
+    {      
+      input = UART_in_char();
+      if (input == CARRIAGE_RETURN_CHAR)
+      {
+        UART_out_char(NEWLINE_CHAR);
+        buffer[index] = NULL_CHAR;
+      } /* if */
+      else if (input == BACKSPACE_CHAR) {
+        UART_out_char(input);
+        if (index > 0)
+        {
+          index--;
+          lcd_set_ddram_addr(LCD_LINE2_ADDR + index);
+          lcd_write_char(' ');
+          lcd_set_ddram_addr(LCD_LINE2_ADDR + index);
+        } /* if */
+      } /* else if */
+      else {
+        if (index < SHELL_MAX_INPUT_LENGTH)
+        {
+          UART_out_char(input);
+          buffer[index] = input;
+          index++;
+          lcd_set_ddram_addr(LCD_LINE2_ADDR + index - 1);
+          lcd_write_char(input);
+        }
+      } /* else */
+    } while (input != CARRIAGE_RETURN_CHAR);
+    shell_handle_input(buffer);
+    lcd_set_ddram_addr(LCD_LINE2_ADDR);
+    lcd_write_string("                ");
+  }
 }
+
+void shell_handle_input(char* input)
+{
+  if (strcmp(input, "help") == 0)
+  {
+    UART_write_string("Available commands:\r\n");
+    UART_write_string("  help  - Show this help message\r\n");
+    UART_write_string("  clock - Measure clock speed\r\n");
+    UART_write_string("  temp  - Read temperature from thermistor\r\n");
+    UART_write_string("  time  - Display current RTC time\r\n");
+  }
+  else if (strcmp(input, "clock") == 0)
+  {
+    uint32_t clock_measurement = measure_clock();
+    char output_buffer[50];
+    sprintf(output_buffer, "Clock cycles in 100ms: %u\r\n", clock_measurement);
+    UART_write_string(output_buffer);
+  }
+  else if (strcmp(input, "temp") == 0)
+  {
+    uint16_t adc_temp_result = ADC0_in(TEMP_SENSOR_CHANNEL);
+    uint8_t temperature_c = thermistor_calc_temperature(adc_temp_result);
+    uint8_t temperature_f = CONVERT_TO_FAHRENHEIT(temperature_c);
+    char output_buffer[50];
+    sprintf(output_buffer, "Temperature: %dC / %dF\r\n", temperature_c, 
+            temperature_f);
+    UART_write_string(output_buffer);
+  }
+  else if (strcmp(input, "time") == 0)
+  {
+    char output_buffer[50];
+    sprintf(output_buffer, "Current Time: %02d:%02d:%02d\r\n", RTC->HOUR, 
+            RTC->MIN, RTC->SEC);
+    UART_write_string(output_buffer);
+  }
+  else
+  {
+    UART_write_string("Unknown command\r\n");
+  } 
+} /* shell_handle_input */
 
 // Should return ~4 million on 40mHz and 8 million on 80mHz
 uint32_t measure_clock(void)

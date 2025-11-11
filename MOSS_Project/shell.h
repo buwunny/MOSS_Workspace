@@ -47,6 +47,7 @@
 #define CARRIAGE_RETURN_CHAR                                              ('\r')
 #define NULL_CHAR                                                         ('\0')
 #define BACKSPACE_CHAR                                                    ('\b')
+#define NEWLINE_CHAR                                                      ('\n')
 #define DEGREE_SYMBOL                                               (0b11011111)
 #define TEMP_SENSOR_CHANNEL                                                  (5)
 #define CONVERT_TO_FAHRENHEIT(x)                              ((x) * 9 / 5 + 32)
