@@ -165,6 +165,8 @@
 #define LCD1602_E_PULSE_WIDTH                                               (50)
 #define LCD1602_E_CYCLE_DELAY                                               (50)
 
+#define DEGREE_SYMBOL                                               (0b11011111)
+
 // ----------------------------------------------------------------------------
 // Prototype for support functions
 // ----------------------------------------------------------------------------
@@ -183,5 +185,7 @@ void lcd_write_byte(uint8_t byte);
 void lcd_write_doublebyte(uint16_t doublebyte);
 void lcd_write_quadbyte(uint32_t word);
 
+void lcd_write_time(uint8_t hour, uint8_t min, uint8_t sec);
+void lcd_write_temp(uint8_t temperature_f);
 
 #endif /* __LCD1602_H__ */

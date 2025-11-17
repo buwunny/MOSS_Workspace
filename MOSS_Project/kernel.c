@@ -46,6 +46,8 @@
 #include "clock.h"
 #include "lcd1602.h"
 #include "LaunchPad.h"
+#include "rtc.h"
+#include "adc.h"
 
 
 //-----------------------------------------------------------------------------
@@ -58,31 +60,28 @@ void kernel_init(void)
   clock_init_80mhz();
   // clock_init_40mhz();
   launchpad_gpio_init();
+  I2C_init();
+  lcd1602_init();
+  ADC0_init(ADC12_MEMCTL_VRSEL_VDDA_VSSA);
   lp_leds_init();
-  
   RTC_init();
-
   sys_tick_init(SYST_TICK_PERIOD_COUNT);
 } /* kernel_init */
 
-void RTC_init(void)
-{ 
-  // Enable power to RTC
-  RTC->GPRCM.PWREN = (RTC_PWREN_KEY_UNLOCK_W | RTC_PWREN_ENABLE_ENABLE);
 
-  // Set to binary mode
-  RTC->CTL |= RTC_CTL_RTCBCD_BINARY;
+// Should return ~4 million on 40mHz and 8 million on 80mHz
+uint32_t measure_clock(void)
+{
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0xFFFFFF;  // max load
+    SysTick->VAL  = 0;
+    SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
 
-  // Enable the RTC
-  RTC->CLKCTL = RTC_CLKCTL_MODCLKEN_ENABLE;
-  
-  // Ensure bit is cleared
-  RTC->CPU_INT.ICLR = RTC_CPU_INT_ICLR_RTCRDY_CLR;
-  
-  // Unmask RTC interrupt
-  RTC->CPU_INT.IMASK = RTC_CPU_INT_IMASK_RTCRDY_SET;
-  
-  // Enable interrupt
-  NVIC_EnableIRQ(RTC_INT_IRQn);
-} /* rtc_init */
+    // Busy loop for a known wall-clock time
+    msec_delay(100);
 
+    uint32_t elapsed = 0xFFFFFF - SysTick->VAL;
+    SysTick->CTRL = 0;
+
+    return elapsed;
+}

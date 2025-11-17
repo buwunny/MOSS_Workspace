@@ -5,10 +5,11 @@
 //
 //         VERSION:  0.1
 //
-//       FILE NAME:  shell.h
+//       FILE NAME:  rtc.c
 //
 //-----------------------------------------------------------------------------
 // DESCRIPTION
+//    This file contains a function for initializing the RTC.
 //
 //-----------------------------------------------------------------------------
 // DISCLAIMER
@@ -23,7 +24,8 @@
 //    advised of the possibility of such damages.
 //
 //    Use of this code is at your own risk, and it is recommended to validate
-//    and adapt the code for your specific application and hardware requirements.
+//    and adapt the code for your specific application and hardware 
+//    requirements.
 //
 // Copyright (c) 2024 by TBD
 //    You may use, edit, run or distribute this file as long as the above
@@ -31,32 +33,33 @@
 // *****************************************************************************
 //******************************************************************************
 
-#ifndef __SHELL_H__
-#define __SHELL_H__
+//-----------------------------------------------------------------------------
+// Load standard C include files
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Loads standard C include files
+// Loads MSP launchpad board support macros and definitions
 //-----------------------------------------------------------------------------
-#include <stdint.h>
+#include <ti/devices/msp/msp.h>
 
 
-//-----------------------------------------------------------------------------
-// Define symbolic constants used by the program
-//-----------------------------------------------------------------------------
-#define SHELL_MAX_INPUT_LENGTH                                              (16)
-#define CARRIAGE_RETURN_CHAR                                              ('\r')
-#define NULL_CHAR                                                         ('\0')
-#define BACKSPACE_CHAR                                                    ('\b')
-#define NEWLINE_CHAR                                                      ('\n')
-#define TEMP_SENSOR_CHANNEL                                                  (5)
-#define CONVERT_TO_FAHRENHEIT(x)                              ((x) * 9 / 5 + 32)
+void RTC_init(void)
+{ 
+  // Enable power to RTC
+  RTC->GPRCM.PWREN = (RTC_PWREN_KEY_UNLOCK_W | RTC_PWREN_ENABLE_ENABLE);
 
-// ----------------------------------------------------------------------------
-// Prototype for support functions
-// ----------------------------------------------------------------------------
-void shell_init(void);
-void shell_loop(void);
-void shell_handle_input(char* input);
-void UART_write_string(char* string);
+  // Set to binary mode
+  RTC->CTL |= RTC_CTL_RTCBCD_BINARY;
 
-#endif /* __SHELL_H__ */
+  // Enable the RTC
+  RTC->CLKCTL = RTC_CLKCTL_MODCLKEN_ENABLE;
+  
+  // Ensure bit is cleared
+  RTC->CPU_INT.ICLR = RTC_CPU_INT_ICLR_RTCRDY_CLR;
+  
+  // Unmask RTC interrupt
+  RTC->CPU_INT.IMASK = RTC_CPU_INT_IMASK_RTCRDY_SET;
+  
+  // Enable interrupt
+  NVIC_EnableIRQ(RTC_INT_IRQn);
+} /* rtc_init */

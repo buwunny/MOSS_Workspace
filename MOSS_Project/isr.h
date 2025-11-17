@@ -5,7 +5,7 @@
 //
 //         VERSION:  0.1
 //
-//       FILE NAME:  shell.h
+//       FILE NAME:  isr.h
 //
 //-----------------------------------------------------------------------------
 // DESCRIPTION
@@ -31,8 +31,8 @@
 // *****************************************************************************
 //******************************************************************************
 
-#ifndef __SHELL_H__
-#define __SHELL_H__
+#ifndef __ISR_H__
+#define __ISR_H__
 
 //-----------------------------------------------------------------------------
 // Loads standard C include files
@@ -43,20 +43,14 @@
 //-----------------------------------------------------------------------------
 // Define symbolic constants used by the program
 //-----------------------------------------------------------------------------
-#define SHELL_MAX_INPUT_LENGTH                                              (16)
-#define CARRIAGE_RETURN_CHAR                                              ('\r')
-#define NULL_CHAR                                                         ('\0')
-#define BACKSPACE_CHAR                                                    ('\b')
-#define NEWLINE_CHAR                                                      ('\n')
 #define TEMP_SENSOR_CHANNEL                                                  (5)
 #define CONVERT_TO_FAHRENHEIT(x)                              ((x) * 9 / 5 + 32)
+
 
 // ----------------------------------------------------------------------------
 // Prototype for support functions
 // ----------------------------------------------------------------------------
-void shell_init(void);
-void shell_loop(void);
-void shell_handle_input(char* input);
-void UART_write_string(char* string);
+void SysTick_Handler(void);
+void RTC_IRQHandler(void);
 
-#endif /* __SHELL_H__ */
+#endif /* __ISR_H__ */

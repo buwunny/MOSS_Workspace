@@ -38,7 +38,6 @@
 // Define function prototypes used by the program
 //------------------------------------------------------------------------------
 void system_init(void);
-void SysTick_Handler(void);
 
 
 //------------------------------------------------------------------------------
@@ -64,42 +63,7 @@ int main(void)
 
 void system_init(void)
 {
-  I2C_init();
-  lcd1602_init();
-  ADC0_init(ADC12_MEMCTL_VRSEL_VDDA_VSSA);
-
   kernel_init();
   shell_init();
   shell_loop();
 } /* system_init */
-
-//------------------------------------------------------------------------------
-// DESCRIPTION:
-//  This function represents the ISR (Interrupt Service Routine) for the SysTick
-//  timer. It is called at regular intervals based on the configured SysTick
-//  period.
-//
-// INPUT PARAMETERS:
-//  none
-//
-// OUTPUT PARAMETERS:
-//  none
-//
-// RETURN:
-//  none
-//------------------------------------------------------------------------------
-void SysTick_Handler(void)
-{
-  static bool on = false;
-  
-  if (!on)
-  {
-    lp_leds_on(LP_RED_LED1_IDX);
-  } /* if */
-  else
-  {
-    lp_leds_off(LP_RED_LED1_IDX);
-  } /* else */
-
-  on = !on;
-} /* SysTick_Handler */

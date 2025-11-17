@@ -1,9 +1,9 @@
 // *****************************************************************************
 // ***************************    C Source Code     ****************************
 // *****************************************************************************
-//   DESIGNER NAME:  Bruce Link
+//   DESIGNER NAME:  Bruce Link, Rafael Ortiz
 //
-//         VERSION:  1.0
+//         VERSION:  1.1
 //
 //       FILE NAME:  LCD1602.c
 //
@@ -12,8 +12,8 @@
 //    This module provides functions to initialize and control a 16x2 character
 //    LCD (LCD1602) via I2C communication. It supports configuring the LCD for
 //    a 4-bit interface, 2 lines, 5x7 characters, turning on/off the display,
-//    setting the cursor, writing characters and strings, and clearing the
-//    display.
+//    setting the cursor, writing the time, temperature characters and strings,
+//    and clearing the display. 
 //
 //    NOTE: This code assumes that the IIC address is 0x27.
 //
@@ -646,3 +646,53 @@ void lcd_write_quadbyte(uint32_t quadbyte)
   lcd_write_string(string_buffer);
 
 } /* lcd_write_quadbyte */
+
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function displays the passed in time in HH:MM:SS format.
+//
+// INPUT PARAMETERS:
+//  hour - hour to display
+//  min - minute to display
+//  sec- second to display
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
+void lcd_write_time(uint8_t hour, uint8_t min, uint8_t sec)
+{
+  lcd_write_char('0' + (hour / 10));
+  lcd_write_char('0' + (hour % 10));
+  lcd_write_char(':');
+  lcd_write_char('0' + (min / 10));
+  lcd_write_char('0' + (min % 10));
+  lcd_write_char(':');
+  lcd_write_char('0' + (sec / 10));
+  lcd_write_char('0' + (sec % 10));
+} /* lcd_write_time */
+
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function displays the current temperature reading from the thermistor
+//  on the LCD and a degree symbol and "F" after.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
+void lcd_write_temp(uint8_t temperature_f)
+{
+  lcd_write_byte(temperature_f);
+  lcd_write_char(DEGREE_SYMBOL);
+  lcd_write_char('F');
+} /* show_temp */

@@ -52,7 +52,6 @@
 // Prototype for support functions
 // ----------------------------------------------------------------------------
 void kernel_init(void);
-void RTC_init(void);
-void RTC_IRQHandler(void);
+uint32_t measure_clock(void);
 
 #endif /* __KERNEL_H__ */
