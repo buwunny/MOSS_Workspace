@@ -65,6 +65,7 @@
 void UART_init(uint32_t baud_rate);
 char UART_in_char(void);
 void UART_out_char(char data);
+void UART_write_string(char *string);
 
 
 

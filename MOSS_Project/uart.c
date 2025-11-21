@@ -189,3 +189,29 @@ void UART_out_char(char data)
 
   UART0->TXDATA = data;
 } /* UART_out_char */
+
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends and displays a string over the UART and console. It goes
+//  through the string until it reaches the end (null character) and then stops. 
+//
+// INPUT PARAMETERS:
+//  string - message to be sent and displayed over the UART and console.
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
+void UART_write_string(char* string)
+{
+  uint8_t index = 0;
+  char current_char = *(string + index);
+  while (current_char != '\0')
+  {
+    current_char = *(string + index++);
+    UART_out_char(current_char); 
+  } /* while */
+} /* UART_write_string */

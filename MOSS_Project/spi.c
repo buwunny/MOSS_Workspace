@@ -175,6 +175,91 @@ void spi1_init(void)
 
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
+//    This function initializes the SPI1 module for a 80 MHz SPI clock. It
+//    performs a reset on the SPI1 module, enables power, configures the
+//    necessary IOMUX settings, selects the clock source, sets the clock
+//    division ratio, and configures the control registers for SPI1.
+//
+//    The SPI1 module is configured with the following settings:
+//    - Clock polarity: Low (idle state)
+//    - Clock phase: First edge
+//    - Data frame format: Motorola 4-wire
+//    - Data size: 8 bits
+//    - Chip select: CS0
+//    - Clock source: System clock
+//    - Clock division: 1
+//
+// INPUT PARAMETERS:
+//   none
+//
+// OUTPUT PARAMETERS:
+//   none
+//
+// RETURN:
+//   none
+// -----------------------------------------------------------------------------
+void spi1_init_80mhz(void)
+{
+
+  // Reset SPI1
+  SPI1->GPRCM.RSTCTL = (GPTIMER_RSTCTL_KEY_UNLOCK_W | 
+					    GPTIMER_RSTCTL_RESETSTKYCLR_CLR |
+					    GPTIMER_RSTCTL_RESETASSERT_ASSERT);
+
+  // Enable power to SPI1
+  SPI1->GPRCM.PWREN = (GPTIMER_PWREN_KEY_UNLOCK_W | 
+                       GPTIMER_PWREN_ENABLE_ENABLE);
+
+  clock_delay(24);
+  
+  IOMUX->SECCFG.PINCM[LP_SPI_CLK_IOMUX] = (IOMUX_PINCM_PC_CONNECTED |
+                      LP_SPI_CLK_PFMODE);
+
+  IOMUX->SECCFG.PINCM[LP_SPI_MOSI_IOMUX] = (IOMUX_PINCM_PC_CONNECTED |
+                      LP_SPI_MOSI_PFMODE);
+
+  IOMUX->SECCFG.PINCM[LP_SPI_MISO_IOMUX] = (IOMUX_PINCM_PC_CONNECTED |
+                     IOMUX_PINCM_INENA_ENABLE | LP_SPI_MISO_PFMODE);
+
+  IOMUX->SECCFG.PINCM[LP_SPI_CS0_IOMUX] = (IOMUX_PINCM_PC_CONNECTED |
+                      LP_SPI_CS0_PFMODE);
+
+  // Select BusClk (SysClk) source for SPI module
+  SPI1->CLKSEL = (SPI_CLKSEL_SYSCLK_SEL_ENABLE | SPI_CLKSEL_MFCLK_SEL_DISABLE |
+                  SPI_CLKSEL_LFCLK_SEL_DISABLE);
+
+  // Set clock division
+  SPI1->CLKDIV = SPI_CLKDIV_RATIO_DIV_BY_1;
+
+  #define PD0_CPUCLK_CLKDIV   2     // PD0 BUSCLK is half of CPUCLK
+  #define PD1_CPUCLK_CLKDIV   1     // PD1 BUSCLK is same as CPUCLK
+
+  // Both SPI modules are on PD1 
+  uint32_t bus_clock = get_bus_clock_freq() / PD1_CPUCLK_CLKDIV;
+
+  // Set clock prescaler to get final SPI clock frequency
+  SPI1->CLKCTL = SPI_CLKCTL_SCR_MINIMUM;
+
+  // Configure SPI control register 0
+  SPI1->CTL0 = (SPI_CTL0_CSCLR_DISABLE | SPI_CTL0_CSSEL_CSSEL_0 | 
+                SPI_CTL0_SPH_FIRST | SPI_CTL0_SPO_LOW | 
+                SPI_CTL0_PACKEN_DISABLED | SPI_CTL0_FRF_MOTOROLA_4WIRE | 
+                SPI_CTL0_DSS_DSS_8);
+
+  // Configure SPI control register 1
+  SPI1->CTL1 = (SPI_CTL1_RXTIMEOUT_MINIMUM | SPI_CTL1_REPEATTX_DISABLE |
+                SPI_CTL1_CDMODE_MINIMUM | SPI_CTL1_CDENABLE_DISABLE |
+                SPI_CTL1_PTEN_DISABLE | SPI_CTL1_PES_DISABLE | 
+                SPI_CTL1_PREN_DISABLE | SPI_CTL1_MSB_ENABLE |
+                SPI_CTL1_POD_DISABLE | SPI_CTL1_CP_ENABLE | 
+                SPI_CTL1_LBM_DISABLE | SPI_CTL1_ENABLE_ENABLE);
+
+} /* spi1_init_80mhz */
+
+
+
+//-----------------------------------------------------------------------------
+// DESCRIPTION:
 //    This function disables the SPI1 module by clearing the enable bit. 
 //    It does not change any of the configurations of the SPI module.
 //

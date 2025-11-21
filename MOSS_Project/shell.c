@@ -40,6 +40,7 @@
 #include "lcd1602.h"
 #include "clock.h"
 #include "adc.h"
+#include "ili9341.h"
 
 
 void shell_init(void)
@@ -102,6 +103,7 @@ void shell_handle_input(char* input)
     UART_write_string("  clock - Measure clock speed\r\n");
     UART_write_string("  temp  - Read temperature from thermistor\r\n");
     UART_write_string("  time  - Display current RTC time\r\n");
+    UART_write_string("  color - Run LCD color test\r\n");
   }
   else if (strcmp(input, "clock") == 0)
   {
@@ -127,35 +129,22 @@ void shell_handle_input(char* input)
             RTC->MIN, RTC->SEC);
     UART_write_string(output_buffer);
   }
+  else if (strcmp(input, "color") == 0)
+  {
+    ili9341_fill_screen(ILI9341_BLACK);
+    msec_delay(500);
+    ili9341_fill_screen(ILI9341_RED);
+    msec_delay(500);
+    ili9341_fill_screen(ILI9341_GREEN);
+    msec_delay(500);
+    ili9341_fill_screen(ILI9341_BLUE);
+    msec_delay(500);
+    ili9341_fill_screen(ILI9341_WHITE);
+    msec_delay(500);
+  }
   else
   {
     UART_write_string("Unknown command\r\n");
   } 
   UART_write_string("\r\n");
 } /* shell_handle_input */
-
-
-//------------------------------------------------------------------------------
-// DESCRIPTION:
-//  This function sends and displays a string over the UART and console. It goes
-//  through the string until it reaches the end (null character) and then stops. 
-//
-// INPUT PARAMETERS:
-//  string - message to be sent and displayed over the UART and console.
-//
-// OUTPUT PARAMETERS:
-//  none
-//
-// RETURN:
-//  none
-//------------------------------------------------------------------------------
-void UART_write_string(char* string)
-{
-  uint8_t index = 0;
-  char current_char = *(string + index);
-  while (current_char != '\0')
-  {
-    current_char = *(string + index++);
-    UART_out_char(current_char); 
-  } /* while */
-} /* UART_write_string */

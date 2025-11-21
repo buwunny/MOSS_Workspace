@@ -25,12 +25,6 @@
 // Loads MSP launchpad board support macros and definitions
 //------------------------------------------------------------------------------
 #include <ti/devices/msp/msp.h>
-#include "clock.h"
-#include "LaunchPad.h"
-#include "uart.h"
-#include "lcd1602.h"
-#include "adc.h"
-#include "spi.h"
 #include "kernel.h"
 #include "shell.h"
 

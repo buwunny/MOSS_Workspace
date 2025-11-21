@@ -81,6 +81,7 @@
 // Prototype for support functions
 // ----------------------------------------------------------------------------
 void spi1_init(void);
+void spi1_init_80mhz(void);
 void spi1_write_data(uint8_t data);
 uint8_t  spi1_read_data(void);
 void spi1_disable(void);

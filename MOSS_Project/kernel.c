@@ -48,6 +48,8 @@
 #include "LaunchPad.h"
 #include "rtc.h"
 #include "adc.h"
+#include "spi.h"
+#include "ili9341.h"
 
 
 //-----------------------------------------------------------------------------
@@ -66,6 +68,8 @@ void kernel_init(void)
   lp_leds_init();
   RTC_init();
   sys_tick_init(SYST_TICK_PERIOD_COUNT);
+  spi1_init_80mhz();
+  ili9341_init();
 } /* kernel_init */
 
 
