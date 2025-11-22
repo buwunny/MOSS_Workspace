@@ -64,6 +64,9 @@ void shell_loop(void)
       {
         UART_out_char(input);
         UART_out_char(NEWLINE_CHAR);
+        uint16_t x, y;
+        get_cursor_position(&x, &y);
+        set_cursor_position(0, y + 30);
         buffer[index] = NULL_CHAR;
       } /* if */
       else if (input == BACKSPACE_CHAR) {
@@ -80,6 +83,7 @@ void shell_loop(void)
         if (index < SHELL_MAX_INPUT_LENGTH)
         {
           UART_out_char(input);
+          ili9341_draw_char_at_cursor(input);
           buffer[index] = input;
           index++;
           lcd_set_ddram_addr(LCD_LINE2_ADDR + index - 1);

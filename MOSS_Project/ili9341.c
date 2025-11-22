@@ -48,7 +48,14 @@
 #include "spi.h"
 #include "clock.h"
 #include "uart.h"
+#include "jet_brains_mono.h"
 
+struct position {
+  uint16_t x;
+  uint16_t y;
+};
+
+struct position g_cursor_pos = {0, 25};
 
 void ili9341_init(void)
 {
@@ -71,9 +78,6 @@ void ili9341_init(void)
 
   // Pin reset
   ili9341_reset();
-
-  ili9341_write_command(ILI9341_SWRESET);
-
 
   // https://github.com/adafruit/Adafruit_ILI9341
   static const uint8_t initcmd[] = {
@@ -135,6 +139,8 @@ void ili9341_reset(void)
   msec_delay(200);
   GPIOA->DOUTSET31_0 = RESET_MASK;
   msec_delay(200);
+  ili9341_write_command(ILI9341_SWRESET);
+  msec_delay(200);
 } /* ili9341_reset */
 
 
@@ -192,7 +198,7 @@ void ili9341_fill_screen(uint16_t color) {
     spi1_write_data(color >> 8);
     spi1_write_data(color);
   }
-}
+} /* ili9341_fill_screen */
 
 void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
   // Set column address (X)
@@ -215,3 +221,52 @@ void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
   // Write pixel color
   ili9341_write_data16(color);
 } /* ili9341_draw_pixel */
+
+
+void ili9341_draw_char(char c, uint16_t x, uint16_t y)
+{
+  if (c < 32 || c > 126) return; // Unsupported character
+
+  const glyph_dsc_t *glyph = &font_dsc.glyph_dsc[c - 32 + 1];
+  const uint8_t *bitmap = &font_dsc.glyph_bitmap[glyph->bitmap_index];
+
+  int16_t top_y = y - (glyph->box_h + glyph->ofs_y);
+
+  for (uint8_t row = 0; row < glyph->box_h; row++)
+  {
+    for (uint8_t col = 0; col < glyph->box_w; col++)
+    {
+      uint8_t byte_index = (col + row * glyph->box_w) / 8;
+      uint8_t bit_index = 7 - ((col + row * glyph->box_w) % 8);
+      bool pixel_on = (bitmap[byte_index] >> bit_index) & 0x01;
+
+      if (pixel_on)
+      {
+        ili9341_draw_pixel(x + glyph->ofs_x + col, top_y + row, ILI9341_BLACK);
+      } /* if */
+    } /* for */
+  } /* for */
+} /* ili9341_draw_char */
+
+
+void ili9341_draw_char_at_cursor(char c)
+{
+  ili9341_draw_char(c, g_cursor_pos.x, g_cursor_pos.y);
+  const glyph_dsc_t *glyph = &font_dsc.glyph_dsc[c - 32 + 1];
+  g_cursor_pos.x += glyph->box_w + 3;
+} /* ili9341_draw_char_at_cursor */
+
+
+void set_cursor_position(uint16_t x, uint16_t y)
+{
+  g_cursor_pos.x = x;
+  g_cursor_pos.y = y;
+} /* set_cursor_position */
+
+
+void get_cursor_position(uint16_t* x, uint16_t* y)
+{
+  *x = g_cursor_pos.x;
+  *y = g_cursor_pos.y;
+} /* get_cursor_position */
+

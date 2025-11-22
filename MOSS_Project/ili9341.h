@@ -143,13 +143,15 @@
 void ili9341_init(void);
 void ili9341_simple_init(void);
 void ili9341_reset(void);
-void ili9341_select(void);
-void ili9341_deselect(void);
 void ili9341_write_command(uint8_t cmd);
 void ili9341_write_data8(uint8_t data);
 void ili9341_write_data16(uint16_t data);
 void ili9341_write_data32(uint32_t data);
 void ili9341_fill_screen(uint16_t color);
 void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color);
+void ili9341_draw_char(char c, uint16_t x, uint16_t y);
+void ili9341_draw_char_at_cursor(char c);
+void set_cursor_position(uint16_t x, uint16_t y);
+void get_cursor_position(uint16_t* x, uint16_t* y);
 
 #endif /* __ILI9341_H__ */
