@@ -92,7 +92,7 @@ void ili9341_init(void)
     ILI9341_PWCTR2  , 1, 0x10,             // Power control SAP[2:0];BT[3:0]
     ILI9341_VMCTR1  , 2, 0x3e, 0x28,       // VCM control
     ILI9341_VMCTR2  , 1, 0x86,             // VCM control2
-    ILI9341_MADCTL  , 1, 0x48,             // Memory Access Control
+    ILI9341_MADCTL  , 1, 0xE8,             // Memory Access Control
     ILI9341_VSCRSADD, 1, 0x00,             // Vertical scroll zero
     ILI9341_PIXFMT  , 1, 0x55,
     ILI9341_FRMCTR1 , 2, 0x00, 0x18,
@@ -179,25 +179,32 @@ void ili9341_write_data32(uint32_t data) {
 } /* ili9341_write_data32 */
 
 
-void ili9341_fill_screen(uint16_t color) {
-  
+void ili9341_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+{
   // Set column address (X)
   ili9341_write_command(0x2A);
-  ili9341_write_data32((0x0000 << 16) | (ILI9341_TFTWIDTH - 1));
+  ili9341_write_data16(x);
+  ili9341_write_data16(x + w - 1);
 
   // Set page address (Y)
   ili9341_write_command(0x2B);
-  ili9341_write_data32((0x0000 << 16) | (ILI9341_TFTHEIGHT - 1));
+  ili9341_write_data16(y);
+  ili9341_write_data16(y + h - 1);
 
   // Write to RAM
   ili9341_write_command(0x2C);
 
   GPIOA->DOUT31_0 |= DC_MASK;
-  // Fill entire screen with color
-  for (uint32_t i = 0; i < (ILI9341_TFTWIDTH * ILI9341_TFTHEIGHT); i++) {
+  // Fill rectangle with color
+  for (uint32_t i = 0; i < (w * h); i++) {
     spi1_write_data(color >> 8);
     spi1_write_data(color);
-  }
+    while (!spi1_xfer_done());
+  } /* for */
+} /* ili9341_fill_rect */
+
+void ili9341_fill_screen(uint16_t color) {
+  ili9341_fill_rect(0, 0, ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, color);
 } /* ili9341_fill_screen */
 
 void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
@@ -249,11 +256,33 @@ void ili9341_draw_char(char c, uint16_t x, uint16_t y)
 } /* ili9341_draw_char */
 
 
+void ili9341_erase_char(char c, uint16_t color)
+{
+  if (c < 32 || c > 126) return;
+
+  const glyph_dsc_t *glyph = &font_dsc.glyph_dsc[c - 32 + 1];
+  int16_t top_y = g_cursor_pos.y - (glyph->box_h + glyph->ofs_y);
+
+  /* cover glyph with color */
+  ili9341_fill_rect(g_cursor_pos.x, top_y, GLYPH_WIDTH, glyph->box_h, color);
+} /* ili9341_erase_char */
+
+
 void ili9341_draw_char_at_cursor(char c)
 {
-  ili9341_draw_char(c, g_cursor_pos.x, g_cursor_pos.y);
-  const glyph_dsc_t *glyph = &font_dsc.glyph_dsc[c - 32 + 1];
-  g_cursor_pos.x += glyph->box_w + 3;
+  if (c == '\n')
+  {
+    g_cursor_pos.y += 25;
+  } /* if */
+  else if (c == '\r')
+  {
+    g_cursor_pos.x = 0;
+  } /* else if */
+  else
+  {
+    ili9341_draw_char(c, g_cursor_pos.x, g_cursor_pos.y);
+    g_cursor_pos.x += GLYPH_WIDTH;
+  } /* else */
 } /* ili9341_draw_char_at_cursor */
 
 
@@ -270,3 +299,9 @@ void get_cursor_position(uint16_t* x, uint16_t* y)
   *y = g_cursor_pos.y;
 } /* get_cursor_position */
 
+
+void ili9341_scroll(uint16_t offset)
+{
+  ili9341_write_command(ILI9341_VSCRSADD);
+  ili9341_write_data16(offset);
+} /* ili9341_scroll */

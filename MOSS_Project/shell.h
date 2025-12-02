@@ -40,14 +40,20 @@
 #include <stdint.h>
 
 
+#include "ili9341.h"
+
+
 //-----------------------------------------------------------------------------
 // Define symbolic constants used by the program
 //-----------------------------------------------------------------------------
-#define SHELL_MAX_INPUT_LENGTH                                              (16)
+#define SHELL_MAX_INPUT_LENGTH                                             (128)
+#define SHELL_LINE_HEIGHT                                                   (25)
+#define SHELL_CHAR_PER_LINE                     (ILI9341_TFTWIDTH / GLYPH_WIDTH)
 #define CARRIAGE_RETURN_CHAR                                              ('\r')
 #define NULL_CHAR                                                         ('\0')
 #define BACKSPACE_CHAR                                                    ('\b')
 #define NEWLINE_CHAR                                                      ('\n')
+#define BAUD_RATE                                                       (115200)
 #define TEMP_SENSOR_CHANNEL                                                  (5)
 #define CONVERT_TO_FAHRENHEIT(x)                              ((x) * 9 / 5 + 32)
 
@@ -57,6 +63,9 @@
 void shell_init(void);
 void shell_loop(void);
 void shell_handle_input(char* input);
-void UART_write_string(char* string);
+void shell_draw_char(char c);
+void shell_erase_char(char c);
+void shell_draw_string(char* str);
+void shell_new_line(void);
 
 #endif /* __SHELL_H__ */

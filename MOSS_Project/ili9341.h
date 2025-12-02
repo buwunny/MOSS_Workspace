@@ -52,10 +52,12 @@
 #define RESET_MASK                                                     (1 << 31)
 #define RESET_IOMUX                                               (IOMUX_PINCM6)
 
+#define GLYPH_WIDTH                                                         (14)
+
 
 // https://github.com/adafruit/Adafruit_ILI9341
-#define ILI9341_TFTWIDTH 240  ///< ILI9341 max TFT width
-#define ILI9341_TFTHEIGHT 320 ///< ILI9341 max TFT height
+#define ILI9341_TFTWIDTH 320  ///< ILI9341 max TFT width
+#define ILI9341_TFTHEIGHT 240 ///< ILI9341 max TFT height
 
 #define ILI9341_NOP 0x00     ///< No-op register
 #define ILI9341_SWRESET 0x01 ///< Software reset register
@@ -147,11 +149,15 @@ void ili9341_write_command(uint8_t cmd);
 void ili9341_write_data8(uint8_t data);
 void ili9341_write_data16(uint16_t data);
 void ili9341_write_data32(uint32_t data);
+void ili9341_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 void ili9341_fill_screen(uint16_t color);
 void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color);
 void ili9341_draw_char(char c, uint16_t x, uint16_t y);
+void ili9341_erase_char(char c, uint16_t color);
 void ili9341_draw_char_at_cursor(char c);
+void shell_draw_string_at_cursor(char* str);
 void set_cursor_position(uint16_t x, uint16_t y);
 void get_cursor_position(uint16_t* x, uint16_t* y);
+void ili9341_scroll(uint16_t offset);
 
 #endif /* __ILI9341_H__ */
