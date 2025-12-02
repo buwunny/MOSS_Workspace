@@ -198,7 +198,7 @@ void spi1_init(void)
 // RETURN:
 //   none
 // -----------------------------------------------------------------------------
-void spi1_init_80mhz(void)
+void spi1_init_40mhz(void)
 {
 
   // Reset SPI1
@@ -229,7 +229,7 @@ void spi1_init_80mhz(void)
                   SPI_CLKSEL_LFCLK_SEL_DISABLE);
 
   // Set clock division
-  SPI1->CLKDIV = SPI_CLKDIV_RATIO_DIV_BY_1;
+  SPI1->CLKDIV = SPI_CLKDIV_RATIO_DIV_BY_2;
 
   #define PD0_CPUCLK_CLKDIV   2     // PD0 BUSCLK is half of CPUCLK
   #define PD1_CPUCLK_CLKDIV   1     // PD1 BUSCLK is same as CPUCLK

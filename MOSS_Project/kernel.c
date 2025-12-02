@@ -68,8 +68,8 @@ void kernel_init(void)
   lp_leds_init();
   RTC_init();
   sys_tick_init(SYST_TICK_PERIOD_COUNT);
-  spi1_init();
-  // spi1_init_80mhz();
+  // spi1_init()s;
+  spi1_init_40mhz();
   ili9341_init();
   ili9341_fill_screen(ILI9341_WHITE);
 } /* kernel_init */
