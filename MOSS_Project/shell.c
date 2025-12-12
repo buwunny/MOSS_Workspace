@@ -3,12 +3,18 @@
 // *****************************************************************************
 //   DESIGNER NAME:  Rafael Ortiz
 //
-//         VERSION:  0.1
+//         VERSION:  1.0
 //
 //       FILE NAME:  shell.c
 //
 //-----------------------------------------------------------------------------
 // DESCRIPTION
+//    This file contains the implementation of a simple shell that can be used
+//    to interact with a microcontroller. The shell supports basic commands 
+//    such as displaying help, measuring clock speed, reading temperature from
+//    a thermistor, displaying the current RTC time, running LCD color test,
+//    and clearing the terminal. The shell uses UART for communication and 
+//    displays output to both the UART and an LCD display.
 //
 //-----------------------------------------------------------------------------
 // DISCLAIMER
@@ -43,13 +49,41 @@
 #include "ili9341.h"
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function initializes the shell by initializing the UART and writing a
+//  welcome message to the UART.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_init(void)
 {
   UART_init(BAUD_RATE);
   UART_write_string("\nWelcome back!\n");
-  
 } /* shell_init */
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function starts the shell loop, which continuously reads input from the
+//  UART and processes it.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_loop(void)
 {
   while (1)
@@ -89,6 +123,22 @@ void shell_loop(void)
   }
 }
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function handles the input received from the UART. It processes the
+//  input to determine which command was entered and executes the corresponding
+//  action.
+//
+// INPUT PARAMETERS:
+//  input - the string received from the UART
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_handle_input(char* input)
 {
   UART_write_string("\r\n");
@@ -165,6 +215,21 @@ void shell_handle_input(char* input)
 } /* shell_handle_input */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function draws a single character on the LCD display at the current
+//  cursor position and then moves the cursor to the next position. If the
+//  cursor reaches the end of the line, it moves to the next line.
+//
+// INPUT PARAMETERS:
+//  c - the character to draw on the LCD
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_draw_char(char c)
 {
   ili9341_draw_char_at_cursor(c);
@@ -177,6 +242,21 @@ void shell_draw_char(char c)
 } /*shell_draw_char */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function erases a single character on the LCD display at the current
+//  cursor position and then moves the cursor to the previous position. If the
+//  cursor reaches the beginning of the line, it moves to the previous line.
+//
+// INPUT PARAMETERS:
+//  c - the character to erase from the LCD
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_erase_char(char c)
 {
   uint16_t x, y;
@@ -196,6 +276,21 @@ void shell_erase_char(char c)
 } /* shell_erase_char */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function draws a string of characters on the LCD display at the current
+//  cursor position and then moves the cursor to the next position. If the cursor
+//  reaches the end of the line, it moves to the next line.
+//
+// INPUT PARAMETERS:
+//  str - the string of characters to draw on the LCD
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_draw_string(char* str)
 {
   while (*str != '\0')
@@ -211,6 +306,21 @@ void shell_draw_string(char* str)
 } /* shell_draw_string */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function moves the cursor to the beginning of the next line on the LCD
+//  display. If the cursor reaches the bottom of the display, it clears the
+//  display and resets the cursor to the top.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void shell_new_line(void)
 {
   uint16_t x, y;

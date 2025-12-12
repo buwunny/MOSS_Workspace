@@ -3,12 +3,18 @@
 // *****************************************************************************
 //   DESIGNER NAME:  Rafael Ortiz
 //
-//         VERSION:  0.1
+//         VERSION:  1.0
 //
 //       FILE NAME:  shell.h
 //
 //-----------------------------------------------------------------------------
 // DESCRIPTION
+//    This file contains the implementation of a simple shell that can be used
+//    to interact with a microcontroller. The shell supports basic commands 
+//    such as displaying help, measuring clock speed, reading temperature from
+//    a thermistor, displaying the current RTC time, running LCD color test,
+//    and clearing the terminal. The shell uses UART for communication and 
+//    displays output to both the UART and an LCD display.
 //
 //-----------------------------------------------------------------------------
 // DISCLAIMER

@@ -187,7 +187,7 @@ void spi1_init(void)
 //    - Data size: 8 bits
 //    - Chip select: CS0
 //    - Clock source: System clock
-//    - Clock division: 1
+//    - Clock division: 2
 //
 // INPUT PARAMETERS:
 //   none

@@ -3,7 +3,7 @@
 // *****************************************************************************
 //   DESIGNER NAME:  Rafael Ortiz
 //
-//         VERSION:  0.1
+//         VERSION:  1.0
 //
 //       FILE NAME:  ili9341.c
 //
@@ -57,6 +57,23 @@ struct position {
 
 struct position g_cursor_pos = {0, 25};
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function initializes the ILI9341 LCD display by configuring the necessary
+//  GPIO pins, sending initialization commands, and setting up the display
+//  settings. The Adafruit ILI9341 library is used as a reference for the
+//  initialization commands.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_init(void)
 {
   // Configure reset pin and DC pin
@@ -133,6 +150,19 @@ void ili9341_init(void)
 } /* ili9341_init */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function performs both a hardware and software reset of the ILI9341.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_reset(void)
 {
   GPIOA->DOUTCLR31_0 = RESET_MASK;
@@ -144,6 +174,20 @@ void ili9341_reset(void)
 } /* ili9341_reset */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends a command to the ILI9341 LCD display via SPI. The DC pin
+//  is set low to indicate that the data being sent is a command.
+//
+// INPUT PARAMETERS:
+//  cmd - The command to be sent to the display
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_write_command(uint8_t cmd) {
   GPIOA->DOUT31_0 &= ~DC_MASK;
   spi1_write_data(cmd);
@@ -151,6 +195,20 @@ void ili9341_write_command(uint8_t cmd) {
 } /* ili9341_write_command */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends 8-bit data to the ILI9341 LCD display via SPI. The DC
+//  pin is set high to indicate that the data being sent is data.
+//
+// INPUT PARAMETERS:
+//  data - The 8-bit data to be sent to the display
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_write_data8(uint8_t data) {
   GPIOA->DOUT31_0 |= DC_MASK;
   spi1_write_data(data);
@@ -158,6 +216,20 @@ void ili9341_write_data8(uint8_t data) {
 } /* ili9341_write_data8 */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends 16-bit data to the ILI9341 LCD display via SPI. The DC
+//  pin is set high to indicate that the data being sent is data.
+//
+// INPUT PARAMETERS:
+//  data - The 16-bit data to be sent to the display
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_write_data16(uint16_t data) {
   GPIOA->DOUT31_0 |= DC_MASK;
   spi1_write_data((data >> 8) & 0xFF);
@@ -166,6 +238,21 @@ void ili9341_write_data16(uint16_t data) {
   while (!spi1_xfer_done());
 } /* ili9341_write_data16 */
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends 32-bit data to the ILI9341 LCD display via SPI. The DC
+//  pin is set high to indicate that the data being sent is data.
+//
+// INPUT PARAMETERS:
+//  data - The 32-bit data to be sent to the display
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_write_data32(uint32_t data) {
   GPIOA->DOUT31_0 |= DC_MASK;
   spi1_write_data((data >> 24) & 0xFF);
@@ -179,6 +266,24 @@ void ili9341_write_data32(uint32_t data) {
 } /* ili9341_write_data32 */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sends 8-bit data to the ILI9341 LCD display via SPI. The DC
+//  pin is set high to indicate that the data being sent is data.
+//
+// INPUT PARAMETERS:
+//  x - The starting X coordinate of the rectangle
+//  y - The starting Y coordinate of the rectangle
+//  w - The width of the rectangle
+//  h - The height of the rectangle
+//  color - The color to fill the rectangle with
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
   // Set column address (X)
@@ -203,10 +308,41 @@ void ili9341_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t 
   } /* for */
 } /* ili9341_fill_rect */
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function fills the entire ILI9341 LCD display with a specified color.
+//
+// INPUT PARAMETERS:
+//  color - The color to fill the entire screen with
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_fill_screen(uint16_t color) {
   ili9341_fill_rect(0, 0, ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, color);
 } /* ili9341_fill_screen */
 
+
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function draws a single pixel on the ILI9341 LCD display at the 
+//  specified coordinates with the specified color.
+//
+// INPUT PARAMETERS:
+//  x - The X coordinate of the pixel
+//  y - The Y coordinate of the pixel
+//  color - The color of the pixel
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
   // Set column address (X)
   ili9341_write_command(0x2A);
@@ -230,6 +366,23 @@ void ili9341_draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
 } /* ili9341_draw_pixel */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function draws a character on the ILI9341 LCD display at the specified
+//  coordinates using the JetBrains Mono font. The character is drawn using the
+//  draw_pixel function.
+//
+// INPUT PARAMETERS:
+//  c - The character to draw
+//  x - The starting X coordinate of the character (upper left corner)
+//  y - The starting Y coordinate of the character (upper left corner)
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_draw_char(char c, uint16_t x, uint16_t y)
 {
   if (c < 32 || c > 126) return; // Unsupported character
@@ -256,6 +409,21 @@ void ili9341_draw_char(char c, uint16_t x, uint16_t y)
 } /* ili9341_draw_char */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function erases a character on the ILI9341 LCD display at the cursor
+//  position. The character is erased by covering it with the specified color.
+//
+// INPUT PARAMETERS:
+//  c - The character to erase
+//  color - The color to use for erasing the character
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_erase_char(char c, uint16_t color)
 {
   if (c < 32 || c > 126) return;
@@ -268,6 +436,23 @@ void ili9341_erase_char(char c, uint16_t color)
 } /* ili9341_erase_char */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function draws a character on the ILI9341 LCD display at the current
+//  cursor position. If the character is a newline, it moves the cursor down by
+//  one line height. If the character is a carriage return, it moves the cursor
+//  to the beginning of the line. For other characters, it draws the character
+//  and moves the cursor to the right by the width of the character.
+//
+// INPUT PARAMETERS:
+//  c - The character to draw at the cursor position
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void ili9341_draw_char_at_cursor(char c)
 {
   if (c == '\n')
@@ -286,6 +471,21 @@ void ili9341_draw_char_at_cursor(char c)
 } /* ili9341_draw_char_at_cursor */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function sets the cursor position on the ILI9341 LCD display. The cursor
+//  position is updated to the specified X and Y coordinates.
+//
+// INPUT PARAMETERS:
+//  x - The new X coordinate of the cursor
+//  y - The new Y coordinate of the cursor
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void set_cursor_position(uint16_t x, uint16_t y)
 {
   g_cursor_pos.x = x;
@@ -293,15 +493,23 @@ void set_cursor_position(uint16_t x, uint16_t y)
 } /* set_cursor_position */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function retrieves the current global cursor variable position and
+//  stores it in the provided pointers to X and Y coordinates.
+//
+// INPUT PARAMETERS:
+//  x - Pointer to store the current X coordinate of the cursor
+//  y - Pointer to store the current Y coordinate of the cursor
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void get_cursor_position(uint16_t* x, uint16_t* y)
 {
   *x = g_cursor_pos.x;
   *y = g_cursor_pos.y;
 } /* get_cursor_position */
-
-
-void ili9341_scroll(uint16_t offset)
-{
-  ili9341_write_command(ILI9341_VSCRSADD);
-  ili9341_write_data16(offset);
-} /* ili9341_scroll */

@@ -3,12 +3,14 @@
 // *****************************************************************************
 //   DESIGNER NAME:  Rafael Ortiz
 //
-//         VERSION:  0.1
+//         VERSION:  1.0
 //
 //       FILE NAME:  kernel.c
 //
 //-----------------------------------------------------------------------------
 // DESCRIPTION
+//    This file contains a collection of functions for initializing the basic
+//    kernel created for the CSC202 final project.
 //
 //-----------------------------------------------------------------------------
 // DISCLAIMER
@@ -57,6 +59,20 @@
 //-----------------------------------------------------------------------------
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function initializes the basic kernel components. It sets up the clock,
+//  GPIO, I2C, LCD, ADC, LEDs, RTC, SysTick, SPI, and ILI9341 components.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void kernel_init(void)
 {
   clock_init_80mhz();
@@ -68,14 +84,27 @@ void kernel_init(void)
   lp_leds_init();
   RTC_init();
   sys_tick_init(SYST_TICK_PERIOD_COUNT);
-  // spi1_init()s;
   spi1_init_40mhz();
   ili9341_init();
   ili9341_fill_screen(ILI9341_WHITE);
 } /* kernel_init */
 
 
-// Should return ~4 million on 40mHz and 8 million on 80mHz
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function attempts to measure the clock frequency by using the SysTick
+//  timer and a known time delay.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  The measured amount of ticks that occurred during the 100ms delay. Should be
+//  close to 8000000 for an 80MHz clock and 4000000 for a 40MHz clock.
+//------------------------------------------------------------------------------
 uint32_t measure_clock(void)
 {
     SysTick->CTRL = 0;
@@ -83,7 +112,6 @@ uint32_t measure_clock(void)
     SysTick->VAL  = 0;
     SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;
 
-    // Busy loop for a known wall-clock time
     msec_delay(100);
 
     uint32_t elapsed = 0xFFFFFF - SysTick->VAL;

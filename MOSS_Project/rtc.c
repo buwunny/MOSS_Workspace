@@ -3,7 +3,7 @@
 // *****************************************************************************
 //   DESIGNER NAME:  Rafael Ortiz
 //
-//         VERSION:  0.1
+//         VERSION:  1.0
 //
 //       FILE NAME:  rtc.c
 //
@@ -43,6 +43,19 @@
 #include <ti/devices/msp/msp.h>
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function initializes the RTC module and enables its interrupts.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void RTC_init(void)
 { 
   // Enable power to RTC

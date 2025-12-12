@@ -682,7 +682,7 @@ void lcd_write_time(uint8_t hour, uint8_t min, uint8_t sec)
 //  on the LCD and a degree symbol and "F" after.
 //
 // INPUT PARAMETERS:
-//  none
+//  temperature_f - temperature in Fahrenheit to display
 //
 // OUTPUT PARAMETERS:
 //  none

@@ -55,6 +55,20 @@ int main(void)
 } /* main */
 
 
+//------------------------------------------------------------------------------
+// DESCRIPTION:
+//  This function initializes the system by calling the initialization functions
+//  for the kernel and shell. It also starts the shell loop.
+//
+// INPUT PARAMETERS:
+//  none
+//
+// OUTPUT PARAMETERS:
+//  none
+//
+// RETURN:
+//  none
+//------------------------------------------------------------------------------
 void system_init(void)
 {
   kernel_init();
